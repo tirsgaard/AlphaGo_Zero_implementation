@@ -46,7 +46,7 @@ def load_saved_games(N_data_points):
         file_name = subdirectory+"game_data_"+str(latest_games)+".npz"
         latest_games -= 1
         # Case where not enough data is generated
-        if (latest_games<-1):
+        if (latest_games<0):
             S_array = S_array[0:data_counter]
             Pi_array = Pi_array[0:data_counter]
             z_array = z_array[0:data_counter]

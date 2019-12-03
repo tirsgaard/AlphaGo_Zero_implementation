@@ -57,10 +57,10 @@ def gpu_worker(gpu_Q, batch_size, board_size, model):
             i = 0
             while(i<batch_size):
                 try:
-                    gpu_job, pipe = gpu_Q.get(True,0.001)
+                    gpu_job, pipe = gpu_Q.get(True,0.0001)
                     pipe_queue.append(pipe)
                     batch[i] = torch.from_numpy(gpu_job)
-                    num_eval += 1
+                    #num_eval += 1
                     i += 1
                 except:
                     if (i!=0):
@@ -216,14 +216,17 @@ def MCTS(root_node, gpu_Q ,N, go_board, color, number_passes):
                 
                 # Get policy and value
                 gpu_Q.put([S, conn_send])
+                
+                # Construct legal and illigal board in the mean time
+                legal_board[0:81] = np.ndarray.flatten(new_go_state.get_legal_board(color))
+                legal_board[81] = 1
+                illegal_board = (legal_board-1)*1000
+                # Receive P, v
                 P, v = conn_rec.recv()
                 v = relative_value[color]*v
                 # Reverse rotation of P 
                 P = reverse_rotate(P, rotation, reflection)
                 # Rescale P based on legal moves
-                
-                legal_board[0:81] = np.ndarray.flatten(new_go_state.get_legal_board(color))
-                legal_board[81] = 1
                 P = np.multiply(P,legal_board)
                 P = P/np.sum(P)
                 
@@ -231,7 +234,7 @@ def MCTS(root_node, gpu_Q ,N, go_board, color, number_passes):
                 new_node = state_node(new_go_state, P, color)
                 
                 # Make large n_roundsnegative penalty to stop choosing illigal moves
-                new_node.illigal_board = (legal_board-1)*1000
+                new_node.illigal_board = illegal_board
                 
                 # Add new node to tree
                 current_node.action_edges[a_chosen] = new_node
@@ -505,7 +508,6 @@ def sim_game(gpu_Q, N, data_Q, v_resign):
 def duel_game(gpu_Q1, gpu_Q2, N, winner_Q):
     def gen_node(gpu_Q, go_game, color, conn_rec, conn_send, game_beginning):
         # A function for generating a node of If no node of board state exists
-        
         relative_value =  {"black": 1,
                            "white": -1}
         S = go_game.get_state(color)
@@ -548,6 +550,9 @@ def duel_game(gpu_Q1, gpu_Q2, N, winner_Q):
     
     turn_switcher = {"black": "white",
                      "white": "black"}
+    temp_switch = 0  #Number of turns before other temperature measure is used
+    eta_par = 0.03
+    epsilon = 0.25
     # Define pipe for GPU process
     conn_rec, conn_send = Pipe(False)
 
@@ -575,14 +580,30 @@ def duel_game(gpu_Q1, gpu_Q2, N, winner_Q):
             player = white
             not_player = black
          
-        # Simulate MCTS
-        root_node = MCTS(root_node, player, N, go_game, turn_color, number_passes)
-        
-        # Compute legal policy
-        pi_legal = root_node.N/root_node.N_total
-        
-        # Selecet action
-        action = np.random.choice(82, size=1, p=pi_legal)[0]
+        if (n_rounds<temp_switch):    
+            # Simulate MCTS
+            root_node = MCTS(root_node, player, N, go_game, turn_color, number_passes)
+            
+            # Compute legal policy
+            pi_legal = root_node.N/root_node.N_total
+            
+            # Selecet action
+            action = np.random.choice(82, size=1, p=pi_legal)[0]
+            
+        # Case where later temperature is used
+        else:
+            # Get noise
+            eta = np.random.dirichlet(np.ones(82)*eta_par)
+            root_node.P = (1-epsilon)*root_node.P+epsilon*eta
+            
+            # Simulate MCTS
+            root_node = MCTS(root_node, player, N, go_game, turn_color, number_passes)
+            
+            # Compute legal actions visit count (needed for storing)
+            pi_legal = root_node.N/root_node.N_total
+            
+            # Pick move
+            action = np.argmax(root_node.N)
         
         # Convert and take action
         #print("Move n. ",n_rounds, "New move was: ", action, "color was: ", turn_color)
