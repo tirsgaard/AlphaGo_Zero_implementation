@@ -74,15 +74,15 @@ if __name__ == '__main__':
             best_model.cuda()
             training_model.cuda()
 
-    elo_league.addPlayer("model2",rating=82)
+    elo_league.addPlayer("model1",rating=0)
 
     ## define variables to be used
-    v_resign = -0.001#float("-inf")
+    v_resign = float("-inf") # Is updated after the first loop
     loop_counter = 1
     training_counter = 0
     model_iter_counter = 0
 
-    skip_self_play = True
+    skip_self_play = False
     skip_training = False
 
 
