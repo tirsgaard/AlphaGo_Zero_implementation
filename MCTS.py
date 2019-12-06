@@ -415,7 +415,7 @@ def sim_game(gpu_Q, N, data_Q, v_resign):
         
         # Save Data
         S = go_game.get_state(turn_color)
-        data.append([S, pi_legal, turn_color])
+        data.append([S.copy(), pi_legal.copy(), turn_color])
         
         # Check for resignation
         if (turn_color=="black"):
