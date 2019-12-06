@@ -119,11 +119,10 @@ def load_latest_model():
     return model
 
 def loss_function(Pi, z, P, v, batch_size):
-    diff = (z - v).mean()
-    value_error = torch.mul(diff,diff)
-    #print(torch.sum(value_error))
+    v = torch.squeeze(v)
+    value_error = torch.mean((v - z)**2)
     inner = torch.log(1e-8 + P)
-    policy_error = torch.bmm(Pi.view(batch_size, 1, 82), inner.view(batch_size, 82, 1))
-    total_error = torch.mean(value_error - policy_error)
-    return total_error, value_error.mean(), -policy_error.mean()
+    policy_error = torch.bmm(Pi.view(batch_size, 1, 82), inner.view(batch_size, 82, 1)).mean()
+    total_error = value_error-policy_error
+    return total_error, value_error, -policy_error
     
