@@ -166,8 +166,8 @@ class valueHead(nn.Module):
                 nn.BatchNorm2d(1),
                 activation_func(activation))
         self.ff_layer1 = nn.Sequential(nn.Linear(board_size*board_size, filter_size, bias=True),
-                                       activation_func(activation), nn.BatchNorm1d(filter_size))
-        self.ff_layer2 = nn.Linear(filter_size,1)
+                                       activation_func(activation))
+        self.ff_layer2 = nn.Linear(filter_size,1, bias=True)
         self.tanh_layer = nn.Tanh()
     
     def forward(self, x):
