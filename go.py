@@ -149,7 +149,8 @@ class go_board:
         if (captured==1):
             self.ko = placed
             # Update legal board for ko
-            
+            self.zero_liberties.append(allies[0])
+            self.zero_lib_board[allies[0]] = 1
             # Check if ko can even be captured
             if (self.liberties[self.ko][0]==1):
                 # Check if Ko now belongs to a group
@@ -413,12 +414,13 @@ class go_board:
             self.feature_board_white[2:16,:,:] = self.feature_board_white[0:14,:,:]
             return
         # TROUBLESHOOTING LINE
+        """
         legal_board = self.get_legal_board(color)
         if (legal_board[move]!=1):
             print("illigal move by color", color)
             print("board was:", self.board)
             print("move was", move)
-        
+        """
         # Check if any zero liberties should be removed
         if self.zero_lib_board[move]==1:
             self.zero_liberties.remove(move)
