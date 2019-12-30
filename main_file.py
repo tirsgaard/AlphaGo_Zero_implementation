@@ -44,10 +44,9 @@ if __name__ == '__main__':
     N_training_games = 2000
     N_MCTS_sim = 400
     N_duel_games = 100
-    TRAIN_STEPS = 1000
     N_turns = 500000
     train_batch_size = 512
-    num_epochs = int(1000/3)#int(1000*512/train_batch_size)
+    num_epochs = 320
     elo_league = Implementation()
 
     # GPU things
@@ -74,10 +73,10 @@ if __name__ == '__main__':
             best_model.cuda()
             training_model.cuda()
 
-    elo_league.addPlayer("model1",rating=0)
+    elo_league.addPlayer("model0",rating=0)
 
     ## define variables to be used
-    v_resign = float("-inf") # Is updated after the first loop
+    v_resign = float("-inf")
     loop_counter = 1
     training_counter = 0
     model_iter_counter = 0
@@ -139,6 +138,10 @@ if __name__ == '__main__':
             loss, v_loss, P_loss = criterion(Pi_batch, z_batch, P_batch, v_batch, train_batch_size)
             loss.backward()
             optimizer.step()
+            
+            writer.add_histogram('Output/v', v_batch, training_counter)
+            writer.add_histogram('Output/P', P_batch, training_counter)
+            writer.add_histogram('Output/Pi', Pi_batch, training_counter)
             writer.add_scalar('Total_loss/train', loss, training_counter)
             writer.add_scalar('value_loss/train', v_loss, training_counter)
             writer.add_scalar('Policy_loss/train', P_loss, training_counter)
@@ -168,24 +171,30 @@ if __name__ == '__main__':
         print("The scores was: ", scores)
         if (scores[0]/6>=scores[1]/4):
             print("New best model!")
-            
-            save_model(training_model)
-            best_model = load_latest_model()
-            if cuda:
-                best_model.cuda()
-
+            best_model = training_model
+            save_model(best_model)
+                
             # Update elo
             name_prev_model = "model"+str(model_iter_counter)
             name_best_model = "model"+str(model_iter_counter+1)
             model_iter_counter += 1
-            
-            
+
             prev_best_elo = elo_league.getPlayerRating(name_prev_model)
-            elo_league.addPlayer(name_best_model, rating=prev_best_elo)
-            
-            new_best_elo = updateEloDuel(new_best_elo, prev_best_elo,  scores[0], N_duel_games)
+            vals = []
+            # Sample elo many times to stabelise
+            for i in range(10**4):
+                league = Implementation()
+                league.addPlayer(name_best_model, rating=prev_best_elo)
+                league.addPlayer(name_prev_model,rating=prev_best_elo)
+                vals.append(updateEloDuel(league, name_best_model, name_prev_model, scores[0], N_duel_games))
+
+            # Add player to database
+            new_best_elo = np.array(vals).mean()
+            elo_league.addPlayer(name_best_model, rating=new_best_elo)
+
             # Store statistics
             writer.add_scalar('Elo', new_best_elo, model_iter_counter)
         else:
             print("The best model was not beaten.")
+        loop_counter += 1
         
