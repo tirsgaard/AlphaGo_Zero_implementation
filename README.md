@@ -15,4 +15,4 @@ This takes ages to run, so we also have some tester functions, to run or test th
 You can play against the best model in the notebook "play_against_newest_model.ipynb".
 
 Some hyperparameters has to be changed depending on the computer running it such as number of threads.
-It takes ~24h to complete a loop using a AMD threadripper 1950x processer and a Titan V GPU.
+It takes ~24h to complete 2,000 self-play games using a AMD threadripper 1950x processer and a Titan V GPU.
