@@ -12,13 +12,6 @@ import numpy as np
 import torch
 
 def load_saved_games(N_data_points):
-    
-    
-
-    #data = np.load("games_data/game_data_24.npz")
-    #S_array, P_array, z_array
-    #print(data['S'])
-    
     # Construct large numpy array of data
     S_array = np.empty((N_data_points, 17, 9, 9), dtype=bool)
     Pi_array = np.empty((N_data_points, 82), dtype=float)
@@ -115,6 +108,7 @@ def load_latest_model():
     latest_model = max(number_list)
     
     load_name = subdirectory+"model_" + str(latest_model) + ".model"
+    print("Loading model" + load_name)
     model = torch.load(load_name)
     return model
 
@@ -125,4 +119,4 @@ def loss_function(Pi, z, P, v, batch_size):
     policy_error = torch.bmm(Pi.view(batch_size, 1, 82), inner.view(batch_size, 82, 1)).mean()
     total_error = value_error-policy_error
     return total_error, value_error, -policy_error
-    
+
