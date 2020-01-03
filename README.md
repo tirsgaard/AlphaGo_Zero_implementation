@@ -13,6 +13,8 @@ The file main_file.py is the master function calling the self-play, training, an
 This takes ages to run, so we also have some tester functions, to run or test the different implementations.
 
 We recommend playing against the best model in the notebook "play_against_newest_model.ipynb".
+To do this create a directory called "saved_models" in the same directory as this implementation.
+Then download the model paremters from https://drive.google.com/open?id=12iWse0HQL9CItQPwc_FLNRIt57VGi5UU and move them to new directory.
 
 Some hyperparameters has to be changed depending on the computer running it such as number of threads.
 It takes ~24h to complete 2,000 self-play games using a AMD threadripper 1950x processer and a Titan V GPU.
