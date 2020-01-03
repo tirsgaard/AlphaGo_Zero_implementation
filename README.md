@@ -6,7 +6,8 @@ The elo system is based on the fantastic implementation here https://github.com/
 Everything else is written by us.
 
 ## Packages used
-To visualize the learning we use the tensorboard, so this has to be installed.
+Pytorch is needed.
+To visualize the learning we use the tensorboard, so this has to be installed if running "main.py". This is not needed if you only want to run "play_against_newest_model.ipynb".
 
 ## Running the code
 The file main_file.py is the master function calling the self-play, training, and evaluation functions.
